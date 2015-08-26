@@ -51,7 +51,8 @@ class App{
 			out(' </tr>' );
 			foreach( $list as $item ){
 				out(' <tr> ');
-				foreach( $item as $key=>$value ) tag( 'td', $this->getValue( $value, $key ) );
+				$link=ROOT.'/'.$table.'/item/'.$item['id'];
+				foreach( $item as $key=>$value ) tag( 'td', '<a href="'.$link.'">'.$this->getValue( $value, $key ).'</a>' );
 				out(' </tr>' );
 			}
 			out( '</table>' );
@@ -69,9 +70,20 @@ class App{
 		return substr( $val, 0, -1 );
 	}
 
+	function getSubject($item){
+		debug($item);
+		return isset( $item['subject'] )?$item['subject']:isset( $item['name'] ) ?$item['name']:'#'.$item['id'];
+	}
+
 	function getNew( $table ){
 		tag( 'h1', 'New '.$this->getSingular($table) );
 		tag( 'p', '[under construction]' );
+	}
+
+	function getItem( $table, $id){
+		$item=$this->db->query( 'SELECT * FROM '.$table )->fetch( PDO::FETCH_ASSOC );
+		tag( 'h1', ucfirst( $this->getSingular($table) ).': '.$this->getSubject( $item ) );
+
 	}
 
 	function router(){
@@ -104,6 +116,9 @@ class App{
 						break;
 					case'new':
 						$this->getNew( $here );
+						break;
+					case'item':
+						$this->getItem($here, $this->route[2]);
 						break;
 					default:
 						tag('h1', 'Error');
