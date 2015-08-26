@@ -71,8 +71,11 @@ class App{
 	}
 
 	function getSubject($item){
-		debug($item);
-		return isset( $item['subject'] )?$item['subject']:isset( $item['name'] ) ?$item['name']:'#'.$item['id'];
+		$fields=array('subject', 'name');
+		foreach ($fields as $key){
+			if(isset($item[$key])) return $item[$key];
+		}
+		return '#'.$item['id'];
 	}
 
 	function getNew( $table ){
@@ -80,10 +83,30 @@ class App{
 		tag( 'p', '[under construction]' );
 	}
 
+	function renderField($key, $value){
+		switch($key){
+			case 'id':
+				tag('li', '<span class="label">'.ucfirst($key).': </span>'.$value);	
+				break;
+			case 'description':
+				tag('li', '<label for="f'.$key.'">'.ucfirst($key).': </label><textarea name="'.$key.'" id="f'.$key.'">'.$value.'</textarea>');	
+				break;
+			default: 
+				tag('li', '<label for="f'.$key.'">'.ucfirst($key).': </label><input name="'.$key.'" id="f'.$key.'" value="'.$value.'">');	
+		}
+		
+	}
+
 	function getItem( $table, $id){
 		$item=$this->db->query( 'SELECT * FROM '.$table )->fetch( PDO::FETCH_ASSOC );
+		out('<form>');
 		tag( 'h1', ucfirst( $this->getSingular($table) ).': '.$this->getSubject( $item ) );
-
+		out( '<ul>' );
+		foreach ($item as $key => $value) {
+			$this->renderField($key, $value);
+		}
+		out( '</ul>' );
+		out('</form>');
 	}
 
 	function router(){
