@@ -1,5 +1,6 @@
 <?php defined('BASE') or die('No access');
 
+/* set your app preferences here */
 define( 'APPNAME', 'Duck' );
 define( 'TIMEZONE', 'Europe/Brussels' );
 
