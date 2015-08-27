@@ -57,29 +57,68 @@ class Admin_page{
 		}
 	}
 
-	function renderField($key, $value){
+	function renderField($key, $value, $mode='update'){
+		$label=ucfirst($key);
 		switch($key){
 			case 'id':
-				tag('li', '<span class="label">'.ucfirst($key).': </span>'.$value);	
+				tag('li', '<span class="label">'.$label.': </span>'.$value);	
 				break;
 			case 'description':
-				tag('li', '<label for="f'.$key.'">'.ucfirst($key).': </label><textarea name="'.$key.'" id="f'.$key.'">'.$value.'</textarea>');	
+				tag('li', '<label for="f'.$label.'">'.$label.': </label><textarea name="'.$key.'" id="f'.$label.'">'.$value.'</textarea>');	
+				break;
+			case 'password':
+				if( $mode=='new' ){
+					tag('li', '<label for="f'.$label.'">'.$label.': </label><input type="password" name="'.$key.'" id="f'.$label.'" value="'.$value.'">');
+				}else{
+					tag('li', '<span class="label">'.$label.': </span>***');		
+				}
 				break;
 			default: 
-				tag('li', '<label for="f'.$key.'">'.ucfirst($key).': </label><input name="'.$key.'" id="f'.$key.'" value="'.$value.'">');	
+				tag('li', '<label for="f'.$label.'">'.$label.': </label><input name="'.$key.'" id="f'.$label.'" value="'.$value.'">');	
 		}
 	}
 
-	function renderItem( $type, $item ){
-		out('<form>');
+	function renderItem( $type, $item, $table ){
 		tag( 'h1', ucfirst( $type ).': '.$this->getSubject( $item ) );
+		out('<form method="post" action="">');
 		out( '<ul>' );
 		foreach ($item as $key => $value) {
 			$this->renderField($key, $value);
 		}
 		out( '</ul>' );
+		out('<div class="formAct"><a href="'.ROOT.'/admin/'.$table.'">Cancel</a> <button type="submit">Submit</div>');
 		out('</form>');
 	}
+
+	function renderNewItem( $type, $fields, $table ){
+		tag( 'h1', 'New '.$type );
+		out('<form method="post" action="">');
+		out( '<ul>' );
+		foreach ($fields as $value){
+			$key=$value['Field'];
+			if($key != 'id')$this->renderField($key, '', 'new');
+		}
+		out( '</ul>' );
+		out('<div class="formAct"><a href="'.ROOT.'/admin/'.$table.'">Cancel</a> <button type="submit">Submit</div>');
+		out('</form>');
+	}
+
+	function renderTable( $table, $list ){
+		tag( 'h1', 'Table: '.$table);
+		out( '<table class="view">' );
+			out(' <tr>' );
+			foreach( $list[0] as $key=>$value ) tag( 'th', $key );
+			out(' </tr>' );
+			foreach( $list as $item ){
+				out(' <tr> ');
+				foreach( $item as $key=>$value ) tag( 'td', $this->getValue( $value, $key, 'new') );
+				out(' </tr>' );
+			}
+			out( '</table>' );
+
+	}
+
+
 
 	function renderFoot(){
 		require( __DIR__.'/html_footer.php' );
