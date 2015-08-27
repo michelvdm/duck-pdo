@@ -24,3 +24,26 @@ function tag( $name, $val='' ){
 function out($val=''){
 	echo $val, PHP_EOL;	
 }
+
+function getArrayValue($arr, $key, $default=''){
+	return isset( $arr[ $key ] )?$arr[ $key ]:$default;
+}
+
+function db_connect($host, $user, $pass, $name){
+	try{
+		$db=new PDO("mysql:host=$host;dbname=$name", $user, $pass);
+		$db->setAttribute (PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		return $db;
+	}catch( PDOException $e ){
+		echo $e->getMessage();
+		return null;
+	}
+}
+
+call_user_func(function(){
+	$_GET=array_map( 'htmlspecialchars', $_GET );
+	$_POST=array_map( 'htmlspecialchars', $_POST );
+	$route=explode( '/', getArrayValue( $_GET, 'url' ).'////' );
+	$app=($route[0]=='admin')?'Admin':'Site';
+	( new $app( $route ) );
+});
