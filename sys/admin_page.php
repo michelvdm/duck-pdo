@@ -25,6 +25,11 @@ class Admin_page{
 		require( __DIR__.'/html_header.php' );
 	}
 
+	function renderFlash( $msg ){
+		extract( $msg );
+		tag('div class="msg '.$type.'"', $content );
+	}
+
 	function renderActions(){
 		if(count($this->actions)>0){
 			out( '<div class="act">' );
@@ -103,6 +108,14 @@ class Admin_page{
 		out('</form>');
 	}
 
+	function renderDelete( $type, $item, $table ){
+		tag( 'h1', 'Delete '.$type.': '.$this->getSubject( $item ) );
+		tag( 'p' , 'Are you sure you want to delete this '.$type.'?' );
+		out('<form method="post" action="">');
+		out('<div class="formAct"><a href="'.ROOT.'/admin/'.$table.'/item/'.$item['id'].'">Cancel</a> <button type="submit">Delete</div>');
+		out('</form>');	
+	}
+
 	function renderTable( $table, $list ){
 		tag( 'h1', 'Table: '.$table);
 		out( '<table class="view">' );
@@ -117,8 +130,6 @@ class Admin_page{
 			out( '</table>' );
 
 	}
-
-
 
 	function renderFoot(){
 		require( __DIR__.'/html_footer.php' );

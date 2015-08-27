@@ -16,16 +16,58 @@ class Admin{
 	}
 
 	function processPost(){
-		$table=$this->route[1];
-		$id=$this->route[3];
-		$arr=array();
-		$val=array( ':id'=>$id );
-		foreach( $_POST as $key => $value ){
-			$arr[]=$key.'=:'.$key;
-			$val[':'.$key]=$value;
+		$table=$this->route[ 1 ];
+		switch( $this->route[ 2 ] ) {
+			case'new':
+				$arr=array();
+				$arr2=array();
+				$val=array();
+				foreach( $_POST as $key => $value ){
+					$arr[]=$key;
+					$arr2[]=':'.$key;
+					$val[':'.$key]=$value;
+				}
+				$q='INSERT INTO '.$table.' ('.join( $arr, ', ' ).') VALUES ('.join( $arr2, ', ' ).')';
+				$this->query( $q, $val );
+				$id=$this->db->lastInsertId();
+				$this->setFlash( ucfirst( $this->getSingular( $table ) ).' #'.$id.' has been added.' );
+				header('Location: '.ROOT.'/admin/'.$table.'/item/'.$id );
+				break;
+			case'item':
+				$id=$this->route[ 3 ];
+				$arr=array();
+				$val=array( ':id'=>$id );
+				foreach( $_POST as $key => $value ){
+					$arr[]=$key.'=:'.$key;
+					$val[':'.$key]=$value;
+				}
+				$this->query( 'UPDATE '.$table.' SET '.join( $arr, ', ' ).' WHERE id=:id', $val );
+				$this->setFlash( ucfirst( $this->getSingular( $table ) ).' #'.$id.' has been updated.' );
+				header('Location: '.ROOT.'/admin/'.$table.'/item/'.$id );
+				break;
+			case'delete':
+				$id=$this->route[ 3 ];
+				$this->query('DELETE FROM '.$table.' WHERE id=:id', array( ':id'=>$id ) );
+				$this->setFlash( ucfirst( $this->getSingular( $table ) ).' #'.$id.' has been deleted.' );
+				header('Location: '.ROOT.'/admin/'.$table );
+				break;
+			default: 
+				$this->setFlash( 'No rule for POST '.$this->route[ 2 ], 'error' );
 		}
-		$this->query( 'UPDATE '.$table.' SET '.join( $arr, ', ' ).' WHERE id=:id', $val );
+	}
 
+	function setFlash($msg, $type='ok'){
+		$_SESSION['msg']=array(
+			'content'=>$msg,
+			'type'=>$type
+		);
+	}
+
+	function renderFlash( $page ){
+		if(isset($_SESSION['msg'])){
+			$page->renderFlash($_SESSION['msg']);
+			unset($_SESSION['msg']);
+		}
 	}
 
 	function getSingular($val){
@@ -45,6 +87,7 @@ class Admin{
 		$page->renderHead();
 		$page->renderAside( $menu, $here );
 		$page->startArticle();
+		$this->renderFlash( $page );
 		switch($here){
 			case'':
 				$page->addAction( 'Add table', 'new', 'new-icon' );
@@ -73,12 +116,19 @@ class Admin{
 						$fields=$this->db->query( 'DESCRIBE '.$table )->fetchAll( PDO::FETCH_ASSOC );
 						$page->renderNewItem( $this->getSingular($table), $fields, $table );
 						break;
-					case'item':
+					case 'delete':
 						$id=$this->route[ 3 ];
 						$q=$this->query('SELECT * FROM '.$table.' WHERE id=:id', array( ':id'=> $id ) );
 						$item=$q->fetch( PDO::FETCH_ASSOC );
-						$type=$this->getSingular( $table );
-						$page->renderItem( $type, $item , $table);
+						$page->renderDelete( $this->getSingular( $table ), $item , $table);
+						break;
+					case'item':
+						$id=$this->route[ 3 ];
+						$page->addAction( 'Delete this '.$this->getSingular( $table ), $table.'/delete/'.$id, 'delete-icon' );
+						$page->renderActions();
+						$q=$this->query('SELECT * FROM '.$table.' WHERE id=:id', array( ':id'=> $id ) );
+						$item=$q->fetch( PDO::FETCH_ASSOC );
+						$page->renderItem( $this->getSingular( $table ), $item , $table);
 						break;
 					default:
 						$page->renderMessage( 'Error', 'No action for: '.$here2 );
